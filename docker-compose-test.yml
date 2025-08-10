@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: library
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    networks: [library_network]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d library"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  api-tests:
+    image: python:3.11-slim
+    working_dir: /app
+    volumes:
+      - ./app:/app
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/library
+      PYTHONPATH: /app
+    depends_on:
+      - db:
+        condition: service_healthy
+    command: >
+      sh -c "pip install --no-cache-dir -r /app/requirements.txt &&
+            pytest -v tests --disable-warnings
+    networks: [library_network]
+
+networks:
+  library_network:
+
+
+# run with:
+# docker compose up
