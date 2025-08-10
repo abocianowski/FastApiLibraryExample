@@ -15,9 +15,23 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Run tests via Docker Compose (test stack)
+      - name: Start db+api (detached)
         run: |
-          docker compose -f docker-compose-test.yml up --abort-on-container-exit --exit-code-from api-tests
+          docker compose -f docker-compose-test.yml up -d
+
+      - name: Wait for API to be reachable
+        run: |
+          for i in {1..120}; do
+            if curl -fsS http://localhost:8000/docs >/dev/null; then
+              echo "API is up"; break
+            fi
+            sleep 1
+            if [ $i -eq 120 ]; then echo "API not reachable in time"; exit 1; fi
+          done
+
+      - name: Run pytest
+        run: |
+          pytest -v app/tests --disable-warnings
 
       - name: Tear down
         if: always()
