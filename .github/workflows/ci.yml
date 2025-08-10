@@ -15,26 +15,30 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Show compose ps + port
+      - name: Run API + DB
         run: |
-          docker compose -f docker-compose-test.yml ps
-          echo "Resolved port:"
-          docker compose -f docker-compose-test.yml port api 8000 || true
+          docker compose -f docker-compose-test.yml up
 
-      - name: Wait for API to be reachable
-        run: |
-          set -e
-          HP=$(docker compose -f docker-compose-test.yml port api 8000 | tail -n1)
-          PORT=${HP##*:}
-          echo "Trying 127.0.0.1:${PORT}"
-          for i in {1..180}; do
-            if curl -fsS "http://127.0.0.1:${PORT}/docs" >/dev/null; then
-              echo "API is up on ${PORT}"; exit 0; fi
-            sleep 1
-          done
-          echo "---- API logs ----"
-          docker compose -f docker-compose-test.yml logs api || true
-          exit 1
+      # - name: Show compose ps + port
+      #   run: |
+      #     docker compose -f docker-compose-test.yml ps
+      #     echo "Resolved port:"
+      #     docker compose -f docker-compose-test.yml port api 8000 || true
+
+      # - name: Wait for API to be reachable
+      #   run: |
+      #     set -e
+      #     HP=$(docker compose -f docker-compose-test.yml port api 8000 | tail -n1)
+      #     PORT=${HP##*:}
+      #     echo "Trying 127.0.0.1:${PORT}"
+      #     for i in {1..180}; do
+      #       if curl -fsS "http://127.0.0.1:${PORT}/docs" >/dev/null; then
+      #         echo "API is up on ${PORT}"; exit 0; fi
+      #       sleep 1
+      #     done
+      #     echo "---- API logs ----"
+      #     docker compose -f docker-compose-test.yml logs api || true
+      #     exit 1
 
       - name: Run pytest
         run: |
