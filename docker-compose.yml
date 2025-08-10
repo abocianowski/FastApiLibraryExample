@@ -24,6 +24,7 @@ services:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/library
+      PYTHONPATH: /app
     depends_on:
       - db
     networks:
