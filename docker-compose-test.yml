@@ -11,7 +11,7 @@ services:
       interval: 3s
       timeout: 3s
       retries: 20
-  api-tests:
+  api:
     image: python:3.11-slim
     working_dir: /app
     volumes:
@@ -24,7 +24,27 @@ services:
         condition: service_healthy
     command: >
       sh -c "pip install --no-cache-dir -r /app/requirements.txt &&
-            pytest -v tests --disable-warnings"
+            uvicorn main:app --host 0.0.0.0 --port 8000"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    networks: [library_network]
+
+  api-tests:
+    image: python:3.11-slim
+    working_dir: /app
+    volumes:
+      - ./app:/app
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/library
+      PYTHONPATH: /app
+    depends_on:
+      api:
+        condition: service_healthy
+    command: >
+      sh -c "pytest -v tests --disable-warnings"
     networks: [library_network]
 
 networks:
