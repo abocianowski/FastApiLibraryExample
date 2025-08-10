@@ -24,7 +24,7 @@ services:
         condition: service_healthy
     command: >
       sh -c "pip install --no-cache-dir -r /app/requirements.txt &&
-            pytest -v tests --disable-warnings
+            pytest -v tests --disable-warnings"
     networks: [library_network]
 
 networks:
