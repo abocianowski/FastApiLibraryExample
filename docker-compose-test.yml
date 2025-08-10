@@ -7,28 +7,28 @@ services:
       POSTGRES_DB: library
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-    networks: [library_network]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d library"]
       interval: 3s
       timeout: 3s
       retries: 20
+    networks: [library_network]
   api:
     image: python:3.11-slim
     working_dir: /app
     volumes:
       - ./app:/app
+    command: >
+      sh -c "pip install --no-cache-dir -r /app/requirements.txt &&
+            python -c 'from core.db.base_class import Base; from core.db.init_data import init_db; from core.db.session import engine; Base.metadata.create_all(bind=engine); init_db()' &&
+            pytest -v tests --disable-warnings"
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/library
       PYTHONPATH: /app
     depends_on:
       db:
         condition: service_healthy
-    command: >
-      sh -c "pip install --no-cache-dir -r /app/requirements.txt &&
-            uvicorn main:app --host 0.0.0.0 --port 8000"
-    ports:
-      - "8000:8000"
-    networks: [library_network]
+    networks:
+      - library_network
 networks:
   library_network:
