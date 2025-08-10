@@ -15,19 +15,26 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Start db+api (detached)
+      - name: Show compose ps + port
         run: |
-          docker compose -f docker-compose-test.yml up -d
+          docker compose -f docker-compose-test.yml ps
+          echo "Resolved port:"
+          docker compose -f docker-compose-test.yml port api 8000 || true
 
       - name: Wait for API to be reachable
         run: |
-          for i in {1..120}; do
-            if curl -fsS http://localhost:8000/docs >/dev/null; then
-              echo "API is up"; break
-            fi
+          set -e
+          HP=$(docker compose -f docker-compose-test.yml port api 8000 | tail -n1)
+          PORT=${HP##*:}
+          echo "Trying 127.0.0.1:${PORT}"
+          for i in {1..180}; do
+            if curl -fsS "http://127.0.0.1:${PORT}/docs" >/dev/null; then
+              echo "API is up on ${PORT}"; exit 0; fi
             sleep 1
-            if [ $i -eq 120 ]; then echo "API not reachable in time"; exit 1; fi
           done
+          echo "---- API logs ----"
+          docker compose -f docker-compose-test.yml logs api || true
+          exit 1
 
       - name: Run pytest
         run: |

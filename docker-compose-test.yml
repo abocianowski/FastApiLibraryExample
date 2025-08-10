@@ -27,11 +27,8 @@ services:
     command: >
       sh -c "pip install --no-cache-dir -r /app/requirements.txt &&
             uvicorn main:app --host 0.0.0.0 --port 8000"
-    healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
-      interval: 5s
-      timeout: 3s
-      retries: 30
+    ports:
+      - "8000:8000"
     networks: [library_network]
 networks:
   library_network:
